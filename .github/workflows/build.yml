@@ -23,10 +23,7 @@ jobs:
 
       - name: Configure
         run: |
-          cmake -S . -B build -A x64 
-            -DCMAKE_BUILD_TYPE=Release 
-            -DGGML_CUDA=ON 
-            -DCMAKE_CUDA_ARCHITECTURES="60;61;70;75;80;86;89;90"
+          cmake -S . -B build -A x64 -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES="60;61;70;75;80;86;89;90"
 
       - name: Build
         run: cmake --build build --config Release -j
@@ -57,9 +54,7 @@ jobs:
 
       - name: Configure
         run: |
-          cmake -S . -B build -A x64 
-            -DCMAKE_BUILD_TYPE=Release 
-            -DGGML_VULKAN=ON
+          cmake -S . -B build -A x64 -DCMAKE_BUILD_TYPE=Release -DGGML_VULKAN=ON
 
       - name: Build
         run: cmake --build build --config Release -j
@@ -77,25 +72,26 @@ jobs:
 
   build-linux-cuda:
     runs-on: ubuntu-latest
-    container:
-      image: nvidia/cuda:11.8.0-devel-ubuntu22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
 
+      - name: Setup CUDA
+        uses: Jimver/cuda-toolkit@v0.2.15
+        with:
+          cuda: '11.8.0'
+          method: 'network'
+
       - name: Install dependencies
         run: |
-          apt-get update
-          apt-get install -y git cmake build-essential
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake
 
       - name: Configure
         run: |
-          cmake -S . -B build \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DGGML_CUDA=ON \
-            -DCMAKE_CUDA_ARCHITECTURES="60;61;70;75;80;86;89;90"
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES="60;61;70;75;80;86;89;90"
 
       - name: Build
         run: cmake --build build --config Release -j$(nproc)
@@ -122,13 +118,11 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake build-essential vulkan-sdk libvulkan-dev glslang-tools spirv-tools
+          sudo apt-get install -y build-essential cmake vulkan-sdk libvulkan-dev glslang-tools spirv-tools
 
       - name: Configure
         run: |
-          cmake -S . -B build \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DGGML_VULKAN=ON
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DGGML_VULKAN=ON
 
       - name: Build
         run: cmake --build build --config Release -j$(nproc)

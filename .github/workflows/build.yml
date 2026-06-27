@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-windows-cuda:
+  build-windows-cpu:
     runs-on: windows-latest
     steps:
       - name: Checkout
@@ -16,16 +16,8 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup CUDA 11.8
-        uses: Jimver/cuda-toolkit@v0.2.15
-        with:
-          cuda: '11.8.0'
-
-      - name: Setup MSVC
-        uses: ilammy/msvc-dev-cmd@v1
-
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=60
+        run: cmake -S . -B build -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build build --config Release -j
@@ -33,76 +25,15 @@ jobs:
       - name: Prepare artifacts
         run: |
           New-Item -ItemType Directory -Path artifacts -Force
-          Copy-Item build\bin\Release\sense-voice-main.exe artifacts\sense-voice-cuda-win-x64.exe
+          Copy-Item build\bin\Release\sense-voice-main.exe artifacts/sense-voice-cpu-win-x64.exe
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: sense-voice-cuda-win-x64
+          name: sense-voice-cpu-win-x64
           path: artifacts/
 
-  build-windows-vulkan:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Install Vulkan SDK via Chocolatey
-        run: choco install vulkansdk -y
-
-      - name: Configure
-        run: |
-          $env:VULKAN_SDK = "C:\VulkanSDK\*"
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DGGML_VULKAN=ON
-
-      - name: Build
-        run: cmake --build build --config Release -j
-
-      - name: Prepare artifacts
-        run: |
-          New-Item -ItemType Directory -Path artifacts -Force
-          Copy-Item build\bin\Release\sense-voice-main.exe artifacts\sense-voice-vulkan-win-x64.exe
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: sense-voice-vulkan-win-x64
-          path: artifacts/
-
-  build-linux-cuda:
-    runs-on: ubuntu-latest
-    container: nvidia/cuda:11.8.0-devel-ubuntu22.04
-    steps:
-      - name: Install dependencies
-        run: |
-          apt-get update
-          apt-get install -y git cmake build-essential
-
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=60
-
-      - name: Build
-        run: cmake --build build --config Release
-
-      - name: Prepare artifacts
-        run: |
-          mkdir -p artifacts
-          cp build/bin/sense-voice-main artifacts/sense-voice-cuda-linux-x64
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: sense-voice-cuda-linux-x64
-          path: artifacts/
-
-  build-linux-vulkan:
+  build-linux-cpu:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -110,13 +41,8 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Vulkan SDK
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libvulkan-dev vulkan-tools glslang-tools shaderc
-
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DGGML_VULKAN=ON
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build build --config Release
@@ -124,10 +50,10 @@ jobs:
       - name: Prepare artifacts
         run: |
           mkdir -p artifacts
-          cp build/bin/sense-voice-main artifacts/sense-voice-vulkan-linux-x64
+          cp build/bin/sense-voice-main artifacts/sense-voice-cpu-linux-x64
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: sense-voice-vulkan-linux-x64
+          name: sense-voice-cpu-linux-x64
           path: artifacts/
